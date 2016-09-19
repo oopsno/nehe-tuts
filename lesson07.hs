@@ -6,8 +6,8 @@ module Main where
 
 import qualified Graphics.UI.GLFW as GLFW
 -- everything from here starts with gl or GL
-import Graphics.Rendering.OpenGL.Raw
-import Graphics.Rendering.GLU.Raw ( gluPerspective, gluBuild2DMipmaps )
+import Graphics.GL
+import Graphics.GLU ( gluPerspective, gluBuild2DMipmaps )
 import Data.Bits ( (.|.) )
 import System.Exit ( exitWith, ExitCode(..) )
 import Control.Monad ( forever )
@@ -29,20 +29,20 @@ glLightfv' l a fp =
 
 initGL :: GLFW.Window -> IO [GLuint]
 initGL win = do
-  glEnable gl_TEXTURE_2D
-  glShadeModel gl_SMOOTH
+  glEnable GL_TEXTURE_2D
+  glShadeModel GL_SMOOTH
   glClearColor 0 0 0 0
   glClearDepth 1
-  glEnable gl_DEPTH_TEST
-  glDepthFunc gl_LEQUAL
-  glHint gl_PERSPECTIVE_CORRECTION_HINT gl_NICEST
+  glEnable GL_DEPTH_TEST
+  glDepthFunc GL_LEQUAL
+  glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST
   lightAmbient  <- newArray' [0.5, 0.5, 0.5, 1.0] 
   lightDiffuse  <- newArray' [1.0, 1.0, 1.0, 1.0]
   lightPosition <- newArray' [0.0, 0.0, 2.0, 1.0]
-  glLightfv' gl_LIGHT1 gl_AMBIENT  lightAmbient
-  glLightfv' gl_LIGHT1 gl_DIFFUSE  lightDiffuse
-  glLightfv' gl_LIGHT1 gl_POSITION lightPosition
-  glEnable gl_LIGHT1
+  glLightfv' GL_LIGHT1 GL_AMBIENT  lightAmbient
+  glLightfv' GL_LIGHT1 GL_DIFFUSE  lightDiffuse
+  glLightfv' GL_LIGHT1 GL_POSITION lightPosition
+  glEnable GL_LIGHT1
   (w,h) <- GLFW.getFramebufferSize win
   resizeScene win w h
   loadGLTextures
@@ -58,42 +58,42 @@ loadGLTextures = do
   let (ptr, off, _) = BSI.toForeignPtr pd
   _ <- withForeignPtr ptr $ \p -> do
     let p' = p `plusPtr` off
-        glNearest = fromIntegral gl_NEAREST
-        glLinear  = fromIntegral gl_LINEAR
+        glNearest = fromIntegral GL_NEAREST
+        glLinear  = fromIntegral GL_LINEAR
     -- create nearest filtered texture
-    glBindTexture gl_TEXTURE_2D (texs!!0)
-    glTexImage2D gl_TEXTURE_2D 0 3
+    glBindTexture GL_TEXTURE_2D (texs!!0)
+    glTexImage2D GL_TEXTURE_2D 0 3
       (fromIntegral w) (fromIntegral h)
-      0 gl_RGB gl_UNSIGNED_BYTE p'
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MAG_FILTER glNearest
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MIN_FILTER glNearest
+      0 GL_RGB GL_UNSIGNED_BYTE p'
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER glNearest
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER glNearest
     -- create linear filtered texture
-    glBindTexture gl_TEXTURE_2D (texs!!1)
-    glTexImage2D gl_TEXTURE_2D 0 3
+    glBindTexture GL_TEXTURE_2D (texs!!1)
+    glTexImage2D GL_TEXTURE_2D 0 3
       (fromIntegral w) (fromIntegral h)
-      0 gl_RGB gl_UNSIGNED_BYTE p'
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MAG_FILTER glLinear
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MIN_FILTER glLinear
+      0 GL_RGB GL_UNSIGNED_BYTE p'
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER glLinear
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER glLinear
     -- create mipmap filtered texture
-    glBindTexture gl_TEXTURE_2D (texs!!2)
-    glTexImage2D gl_TEXTURE_2D 0 3
+    glBindTexture GL_TEXTURE_2D (texs!!2)
+    glTexImage2D GL_TEXTURE_2D 0 3
       (fromIntegral w) (fromIntegral h)
-      0 gl_RGB gl_UNSIGNED_BYTE p'
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MAG_FILTER glLinear 
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MIN_FILTER
-      (fromIntegral gl_LINEAR_MIPMAP_NEAREST)
-    gluBuild2DMipmaps gl_TEXTURE_2D 3 (fromIntegral w)
-      (fromIntegral h) gl_RGB gl_UNSIGNED_BYTE p'
+      0 GL_RGB GL_UNSIGNED_BYTE p'
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER glLinear 
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER
+      (fromIntegral GL_LINEAR_MIPMAP_NEAREST)
+    gluBuild2DMipmaps GL_TEXTURE_2D 3 (fromIntegral w)
+      (fromIntegral h) GL_RGB GL_UNSIGNED_BYTE p'
   return texs
 
 resizeScene :: GLFW.WindowSizeCallback
 resizeScene win w     0      = resizeScene win w 1 -- prevent divide by zero
 resizeScene _   width height = do
   glViewport 0 0 (fromIntegral width) (fromIntegral height)
-  glMatrixMode gl_PROJECTION
+  glMatrixMode GL_PROJECTION
   glLoadIdentity
   gluPerspective 45 (fromIntegral width/fromIntegral height) 0.1 100
-  glMatrixMode gl_MODELVIEW
+  glMatrixMode GL_MODELVIEW
   glLoadIdentity
   glFlush
 
@@ -102,8 +102,8 @@ drawScene :: [GLuint] -> IORef GLfloat -> IORef GLfloat
           -> IORef Int -> GLFW.Window -> IO ()
 drawScene texs xrot yrot xspeed yspeed zdepth filt _ = do
   -- clear the screen and the depth buffer
-  glClear $ fromIntegral  $  gl_COLOR_BUFFER_BIT
-                         .|. gl_DEPTH_BUFFER_BIT
+  glClear $ fromIntegral  $  GL_COLOR_BUFFER_BIT
+                         .|. GL_DEPTH_BUFFER_BIT
   glLoadIdentity -- reset view
 
   glTranslatef 0 0 (-5.0) --Move left 5 Units into the screen
@@ -116,9 +116,9 @@ drawScene texs xrot yrot xspeed yspeed zdepth filt _ = do
   glRotatef xr 1 0 0 -- Rotate the triangle on the Y axis
   glRotatef yr 0 1 0 -- Rotate the triangle on the Y axis
   f <- readIORef filt
-  glBindTexture gl_TEXTURE_2D (texs!!f)
+  glBindTexture GL_TEXTURE_2D (texs!!f)
   
-  glBegin gl_QUADS -- start drawing a polygon (4 sided)
+  glBegin GL_QUADS -- start drawing a polygon (4 sided)
   -- first the front
   glNormal3f     0    0    1
   glTexCoord2f   0    0 
@@ -202,8 +202,8 @@ keyPressed _ _ _ _ _ win GLFW.Key'Escape _ GLFW.KeyState'Pressed _ = shutdown wi
 keyPressed l _ _ _ _ _   GLFW.Key'L  _ GLFW.KeyState'Pressed _ = do
   le <- readIORef l
   if le == True
-    then glEnable  gl_LIGHTING
-    else glDisable gl_LIGHTING
+    then glEnable  GL_LIGHTING
+    else glDisable GL_LIGHTING
   writeIORef l $! not le
 keyPressed _ filt _ _ _ _ GLFW.Key'F _ GLFW.KeyState'Pressed _ = do
   f <- readIORef filt

@@ -6,8 +6,8 @@ module Main where
 
 import qualified Graphics.UI.GLFW as GLFW
 -- everything from here starts with gl or GL
-import Graphics.Rendering.OpenGL.Raw
-import Graphics.Rendering.GLU.Raw ( gluPerspective )
+import Graphics.GL
+import Graphics.GLU ( gluPerspective )
 import Data.Bits ( (.|.) )
 import System.Exit ( exitWith, ExitCode(..) )
 import Control.Monad ( forever )
@@ -19,12 +19,12 @@ qincrement = -0.15
 
 initGL :: GLFW.Window -> IO ()
 initGL win = do
-  glShadeModel gl_SMOOTH -- enables smooth color shading
+  glShadeModel GL_SMOOTH -- enables smooth color shading
   glClearColor 0 0 0 0 -- Clear the background color to black
   glClearDepth 1 -- enables clearing of the depth buffer
-  glEnable gl_DEPTH_TEST
-  glDepthFunc gl_LEQUAL  -- type of depth test
-  glHint gl_PERSPECTIVE_CORRECTION_HINT gl_NICEST
+  glEnable GL_DEPTH_TEST
+  glDepthFunc GL_LEQUAL  -- type of depth test
+  glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST
   (w,h) <- GLFW.getFramebufferSize win
   resizeScene win w h
 
@@ -32,18 +32,18 @@ resizeScene :: GLFW.WindowSizeCallback
 resizeScene win w     0      = resizeScene win w 1 -- prevent divide by zero
 resizeScene _   width height = do
   glViewport 0 0 (fromIntegral width) (fromIntegral height)
-  glMatrixMode gl_PROJECTION
+  glMatrixMode GL_PROJECTION
   glLoadIdentity
   gluPerspective 45 (fromIntegral width/fromIntegral height) 0.1 100
-  glMatrixMode gl_MODELVIEW
+  glMatrixMode GL_MODELVIEW
   glLoadIdentity
   glFlush
 
 drawScene :: IORef GLfloat -> IORef GLfloat -> GLFW.Window -> IO ()
 drawScene rtri rquad _ = do
   -- clear the screen and the depth buffer
-  glClear $ fromIntegral  $  gl_COLOR_BUFFER_BIT
-                         .|. gl_DEPTH_BUFFER_BIT
+  glClear $ fromIntegral  $  GL_COLOR_BUFFER_BIT
+                         .|. GL_DEPTH_BUFFER_BIT
   glLoadIdentity  -- reset view
 
   glTranslatef (-1.5) 0 (-6.0) --Move left 1.5 Units and into the screen 6.0
@@ -51,7 +51,7 @@ drawScene rtri rquad _ = do
   glRotatef rt 0 1 0 -- Rotate the triangle on the Y axis
 
   -- draw a triangle (in smooth coloring mode)
-  glBegin gl_TRIANGLES  -- start drawing a polygon
+  glBegin GL_TRIANGLES  -- start drawing a polygon
   -- first the front
   glColor3f    1    0    0  -- set The color to Red
   glVertex3f   0    1    0  -- top of triangle (front)
@@ -87,7 +87,7 @@ drawScene rtri rquad _ = do
   rq <- readIORef rquad
   glRotatef rq 1 1 1 -- rotate the quad on the x axis
 
-  glBegin gl_QUADS -- start drawing a polygon (4 sided)
+  glBegin GL_QUADS -- start drawing a polygon (4 sided)
   -- first the top
   glColor3f    0    1    0  -- set color to green
   glVertex3f   1    1  (-1) -- top right of quad (Top)

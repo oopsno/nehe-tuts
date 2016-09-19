@@ -5,8 +5,8 @@
 module Main where
 
 import qualified Graphics.UI.GLFW as GLFW
-import Graphics.Rendering.OpenGL.Raw
-import Graphics.Rendering.GLU.Raw ( gluPerspective, gluBuild2DMipmaps )
+import Graphics.GL
+import Graphics.GLU ( gluPerspective, gluBuild2DMipmaps )
 import Data.Bits ( (.|.) )
 import System.Exit ( exitWith, ExitCode(..) )
 import System.IO ( openFile, IOMode(..), hGetContents )
@@ -109,23 +109,23 @@ setupWorld = do
 
 initGL :: GLFW.Window -> IO [GLuint]
 initGL win = do
-  glEnable gl_TEXTURE_2D
-  glShadeModel gl_SMOOTH
+  glEnable GL_TEXTURE_2D
+  glShadeModel GL_SMOOTH
   glClearColor 0 0 0 0.5
   glClearDepth 1
-  glEnable gl_DEPTH_TEST
-  glDepthFunc gl_LEQUAL
-  glHint gl_PERSPECTIVE_CORRECTION_HINT gl_NICEST
+  glEnable GL_DEPTH_TEST
+  glDepthFunc GL_LEQUAL
+  glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST
   lightAmbient  <- newArray' [0.5, 0.5, 0.5, 1]
   lightDiffuse  <- newArray' [1, 1, 1, 1]
   lightPosition <- newArray' [0, 0, 2, 1]
-  glLightfv' gl_LIGHT1 gl_AMBIENT  lightAmbient
-  glLightfv' gl_LIGHT1 gl_DIFFUSE  lightDiffuse
-  glLightfv' gl_LIGHT1 gl_POSITION lightPosition
-  glEnable gl_LIGHTING
-  glEnable gl_LIGHT1
-  glBlendFunc gl_SRC_ALPHA gl_ONE
-  glEnable gl_BLEND
+  glLightfv' GL_LIGHT1 GL_AMBIENT  lightAmbient
+  glLightfv' GL_LIGHT1 GL_DIFFUSE  lightDiffuse
+  glLightfv' GL_LIGHT1 GL_POSITION lightPosition
+  glEnable GL_LIGHTING
+  glEnable GL_LIGHT1
+  glBlendFunc GL_SRC_ALPHA GL_ONE
+  glEnable GL_BLEND
   (w,h) <- GLFW.getFramebufferSize win
   resizeScene win w h
   loadTextures
@@ -141,49 +141,49 @@ loadTextures = do
   let (ptr, off, _) = BSI.toForeignPtr pd
   _ <- withForeignPtr ptr $ \p -> do
     let p' = p `plusPtr` off
-        glLinear  = fromIntegral gl_LINEAR
-        glNearest = fromIntegral gl_NEAREST
+        glLinear  = fromIntegral GL_LINEAR
+        glNearest = fromIntegral GL_NEAREST
     -- create nearest filter texture
-    glBindTexture gl_TEXTURE_2D (texs!!0)
-    glTexImage2D gl_TEXTURE_2D 0 3
+    glBindTexture GL_TEXTURE_2D (texs!!0)
+    glTexImage2D GL_TEXTURE_2D 0 3
       (fromIntegral w) (fromIntegral h)
-      0 gl_RGB gl_UNSIGNED_BYTE p'
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MAG_FILTER glNearest
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MIN_FILTER glNearest
+      0 GL_RGB GL_UNSIGNED_BYTE p'
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER glNearest
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER glNearest
     -- create linear filtered texture
-    glBindTexture gl_TEXTURE_2D (texs!!1)
-    glTexImage2D gl_TEXTURE_2D 0 3
+    glBindTexture GL_TEXTURE_2D (texs!!1)
+    glTexImage2D GL_TEXTURE_2D 0 3
       (fromIntegral w) (fromIntegral h)
-      0 gl_RGB gl_UNSIGNED_BYTE p'
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MAG_FILTER glLinear
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MIN_FILTER glLinear
+      0 GL_RGB GL_UNSIGNED_BYTE p'
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER glLinear
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER glLinear
     -- create mipmap filtered texture
-    glBindTexture gl_TEXTURE_2D (texs!!2)
-    glTexImage2D gl_TEXTURE_2D 0 3
+    glBindTexture GL_TEXTURE_2D (texs!!2)
+    glTexImage2D GL_TEXTURE_2D 0 3
       (fromIntegral w) (fromIntegral h)
-      0 gl_RGB gl_UNSIGNED_BYTE p'
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MAG_FILTER glLinear
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MIN_FILTER
-      (fromIntegral gl_LINEAR_MIPMAP_NEAREST)
-    gluBuild2DMipmaps gl_TEXTURE_2D 3 (fromIntegral w)
-      (fromIntegral h) gl_RGB gl_UNSIGNED_BYTE p'
+      0 GL_RGB GL_UNSIGNED_BYTE p'
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER glLinear
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER
+      (fromIntegral GL_LINEAR_MIPMAP_NEAREST)
+    gluBuild2DMipmaps GL_TEXTURE_2D 3 (fromIntegral w)
+      (fromIntegral h) GL_RGB GL_UNSIGNED_BYTE p'
   return texs
 
 resizeScene :: GLFW.WindowSizeCallback
 resizeScene win w     0      = resizeScene win w 1 -- prevent divide by zero
 resizeScene _   width height = do
   glViewport 0 0 (fromIntegral width) (fromIntegral height)
-  glMatrixMode gl_PROJECTION
+  glMatrixMode GL_PROJECTION
   glLoadIdentity
   gluPerspective 45 (fromIntegral width/fromIntegral height) 0.1 100
-  glMatrixMode gl_MODELVIEW
+  glMatrixMode GL_MODELVIEW
   glLoadIdentity
   glFlush
 
 drawScene :: [GLuint] -> Sector -> Global -> GLFW.Window -> IO ()
 drawScene texs sector globals _ = do
-  glClear $ fromIntegral  $  gl_COLOR_BUFFER_BIT
-                         .|. gl_DEPTH_BUFFER_BIT
+  glClear $ fromIntegral  $  GL_COLOR_BUFFER_BIT
+                         .|. GL_DEPTH_BUFFER_BIT
   glLoadIdentity  -- reset view
   xtrans <- fmap negate (readIORef (xpos globals))
   ytrans <- fmap (\y -> -y-0.25) (readIORef (walkbias globals))
@@ -196,11 +196,11 @@ drawScene texs sector globals _ = do
   glRotatef sceneroty 0 1 0
   
   glTranslatef xtrans ytrans ztrans
-  glBindTexture gl_TEXTURE_2D (texs!!filt)
+  glBindTexture GL_TEXTURE_2D (texs!!filt)
   forM_ sector $ \(Tri (Vert x1 y1 z1 u1 v1)
                        (Vert x2 y2 z2 u2 v2)
                        (Vert x3 y3 z3 u3 v3)) -> do
-    glBegin gl_TRIANGLES
+    glBegin GL_TRIANGLES
     glNormal3f 0 0 1
     glTexCoord2f u1 v1 >> glVertex3f x1 y1 z1
     glTexCoord2f u2 v2 >> glVertex3f x2 y2 z2
@@ -227,19 +227,19 @@ keyPressed g _   GLFW.Key'B      _ GLFW.KeyState'Pressed _ = do
   r <- readIORef (blend g)
   if r
      then do
-       glDisable gl_BLEND
-       glEnable gl_DEPTH_TEST
+       glDisable GL_BLEND
+       glEnable GL_DEPTH_TEST
      else do
-       glEnable gl_BLEND
-       glDisable gl_DEPTH_TEST
+       glEnable GL_BLEND
+       glDisable GL_DEPTH_TEST
   writeIORef (blend g) $! not r
 keyPressed g _ GLFW.Key'F _ GLFW.KeyState'Pressed _ =
   modifyIORef (filterSelector g) (\x -> (x+1) `mod` 3)
 keyPressed g _ GLFW.Key'L _ GLFW.KeyState'Pressed _ = do
   l <- readIORef (lighting g)
   if l
-     then glDisable gl_LIGHTING
-     else glEnable  gl_LIGHTING  
+     then glDisable GL_LIGHTING
+     else glEnable  GL_LIGHTING  
   writeIORef (lighting g) $! not l
 keyPressed g _ GLFW.Key'Right _ GLFW.KeyState'Pressed _ =
   modifyIORef (yrot g) (subtract 1.5)

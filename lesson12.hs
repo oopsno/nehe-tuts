@@ -6,8 +6,8 @@ module Main where
 
 import qualified Graphics.UI.GLFW as GLFW
 -- everything from here starts with gl or GL
-import Graphics.Rendering.OpenGL.Raw
-import Graphics.Rendering.GLU.Raw ( gluPerspective )
+import Graphics.GL
+import Graphics.GLU ( gluPerspective )
 import Data.Bits ( (.|.) )
 import System.Exit ( exitWith, ExitCode(..) )
 import Control.Monad ( forever, forM_ )
@@ -27,8 +27,8 @@ topcol = [(0.5, 0, 0), (0.5, 0.25, 0), (0.5, 0.5, 0),
 buildLists :: IO (GLuint, GLuint)
 buildLists = do
   box <- glGenLists 2
-  glNewList box gl_COMPILE
-  glBegin gl_QUADS
+  glNewList box GL_COMPILE
+  glBegin GL_QUADS
   glTexCoord2f 1   1   >> glVertex3f   (-1) (-1)   (-1)   -- Top Right Of The Texture and Quad
   glTexCoord2f 0.0 1.0 >> glVertex3f   1.0  (-1.0) (-1.0) -- Top Left Of The Texture and Quad
   glTexCoord2f 0.0 0.0 >> glVertex3f   1.0  (-1.0)  1.0   -- Bottom Left Of The Texture and Quad
@@ -56,8 +56,8 @@ buildLists = do
 
   glEndList
   let top = box + 1
-  glNewList top gl_COMPILE
-  glBegin gl_QUADS
+  glNewList top GL_COMPILE
+  glBegin GL_QUADS
   glTexCoord2f 0 1 >> glVertex3f (-1) 1 (-1)
   glTexCoord2f 0 0 >> glVertex3f (-1) 1   1
   glTexCoord2f 1 0 >> glVertex3f   1  1   1
@@ -69,16 +69,16 @@ buildLists = do
 initGL :: GLFW.Window -> IO GLuint
 initGL win = do
   tex <- loadTextures
-  glEnable gl_TEXTURE_2D
-  glShadeModel gl_SMOOTH
+  glEnable GL_TEXTURE_2D
+  glShadeModel GL_SMOOTH
   glClearColor 0 0 0 0.5
   glClearDepth 1
-  glEnable gl_DEPTH_TEST
-  glEnable gl_LEQUAL
-  glEnable gl_LIGHT0
-  glEnable gl_LIGHTING
-  glEnable gl_COLOR_MATERIAL
-  glHint gl_PERSPECTIVE_CORRECTION_HINT gl_NICEST
+  glEnable GL_DEPTH_TEST
+  glEnable GL_LEQUAL
+  glEnable GL_LIGHT0
+  glEnable GL_LIGHTING
+  glEnable GL_COLOR_MATERIAL
+  glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST
   (w,h) <- GLFW.getFramebufferSize win
   resizeScene win w h
   return tex
@@ -95,14 +95,14 @@ loadTextures = do
   let (ptr, off, _) = BSI.toForeignPtr pd
   _ <- withForeignPtr ptr $ \p -> do
     let p' = p `plusPtr` off
-        glNearest  = fromIntegral gl_NEAREST
+        glNearest  = fromIntegral GL_NEAREST
     -- create linear filtered texture
-    glBindTexture gl_TEXTURE_2D tex
-    glTexImage2D gl_TEXTURE_2D 0 3
+    glBindTexture GL_TEXTURE_2D tex
+    glTexImage2D GL_TEXTURE_2D 0 3
       (fromIntegral w) (fromIntegral h)
-      0 gl_RGB gl_UNSIGNED_BYTE p'
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MAG_FILTER glNearest
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MIN_FILTER glNearest
+      0 GL_RGB GL_UNSIGNED_BYTE p'
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER glNearest
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER glNearest
   return tex
 
 shutdown :: GLFW.WindowCloseCallback
@@ -116,19 +116,19 @@ resizeScene :: GLFW.WindowSizeCallback
 resizeScene win w     0      = resizeScene win w 1 -- prevent divide by zero
 resizeScene _   width height = do
   glViewport 0 0 (fromIntegral width) (fromIntegral height)
-  glMatrixMode gl_PROJECTION
+  glMatrixMode GL_PROJECTION
   glLoadIdentity
   gluPerspective 45 (fromIntegral width/fromIntegral height) 0.1 100
-  glMatrixMode gl_MODELVIEW
+  glMatrixMode GL_MODELVIEW
   glLoadIdentity
   glFlush
 
 drawScene :: GLuint -> IORef GLfloat -> IORef GLfloat
           -> GLuint -> GLuint -> GLFW.Window -> IO ()
 drawScene tex xrot yrot box top _ = do
-  glClear $ fromIntegral  $  gl_COLOR_BUFFER_BIT
-                         .|. gl_DEPTH_BUFFER_BIT
-  glBindTexture gl_TEXTURE_2D tex
+  glClear $ fromIntegral  $  GL_COLOR_BUFFER_BIT
+                         .|. GL_DEPTH_BUFFER_BIT
+  glBindTexture GL_TEXTURE_2D tex
 
   xr <- readIORef xrot
   yr <- readIORef yrot

@@ -6,8 +6,8 @@ module Main where
 
 import qualified Graphics.UI.GLFW as GLFW
 -- everything from here starts with gl or GL
-import Graphics.Rendering.OpenGL.Raw
-import Graphics.Rendering.GLU.Raw ( gluPerspective )
+import Graphics.GL
+import Graphics.GLU ( gluPerspective )
 import Data.Bits ( (.|.) )
 import System.Exit ( exitWith, ExitCode(..) )
 import Control.Monad ( forever, when, forM, forM_ )
@@ -40,13 +40,13 @@ glLightfv' l a fp =
 
 initGL :: GLFW.Window -> IO GLuint
 initGL win = do
-  glEnable gl_TEXTURE_2D
-  glShadeModel gl_SMOOTH
+  glEnable GL_TEXTURE_2D
+  glShadeModel GL_SMOOTH
   glClearColor 0 0 0 0.5
   glClearDepth 1
-  glHint gl_PERSPECTIVE_CORRECTION_HINT gl_NICEST
-  glBlendFunc gl_SRC_ALPHA gl_ONE
-  glEnable gl_BLEND
+  glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST
+  glBlendFunc GL_SRC_ALPHA GL_ONE
+  glEnable GL_BLEND
   (w,h) <- GLFW.getFramebufferSize win
   resizeScene win w h
   loadGLTextures
@@ -70,24 +70,24 @@ loadGLTextures = do
   let (ptr, off, _) = BSI.toForeignPtr pd
   _ <- withForeignPtr ptr $ \p -> do
     let p' = p `plusPtr` off
-        glLinear  = fromIntegral gl_LINEAR
+        glLinear  = fromIntegral GL_LINEAR
     -- create linear filtered texture
-    glBindTexture gl_TEXTURE_2D tex
-    glTexImage2D gl_TEXTURE_2D 0 3
+    glBindTexture GL_TEXTURE_2D tex
+    glTexImage2D GL_TEXTURE_2D 0 3
       (fromIntegral w) (fromIntegral h)
-      0 gl_RGB gl_UNSIGNED_BYTE p'
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MAG_FILTER glLinear
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MIN_FILTER glLinear
+      0 GL_RGB GL_UNSIGNED_BYTE p'
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER glLinear
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER glLinear
   return tex
 
 resizeScene :: GLFW.WindowSizeCallback
 resizeScene win w     0      = resizeScene win w 1 -- prevent divide by zero
 resizeScene _   width height = do
   glViewport 0 0 (fromIntegral width) (fromIntegral height)
-  glMatrixMode gl_PROJECTION
+  glMatrixMode GL_PROJECTION
   glLoadIdentity
   gluPerspective 45 (fromIntegral width/fromIntegral height) 0.1 100
-  glMatrixMode gl_MODELVIEW
+  glMatrixMode GL_MODELVIEW
   glLoadIdentity
   glFlush
 
@@ -99,9 +99,9 @@ drawScene :: GLuint -> IORef GLfloat -> IORef GLfloat
           -> GLFW.Window -> IO ()
 drawScene tex zoom tilt twinkle spin stars _ = do
   -- clear the screen and the depth buffer
-  glClear $ fromIntegral  $  gl_COLOR_BUFFER_BIT
-                         .|. gl_DEPTH_BUFFER_BIT
-  glBindTexture gl_TEXTURE_2D tex
+  glClear $ fromIntegral  $  GL_COLOR_BUFFER_BIT
+                         .|. GL_DEPTH_BUFFER_BIT
+  glBindTexture GL_TEXTURE_2D tex
 
   let starTuples = zip3 stars
                         (reverse stars)
@@ -122,7 +122,7 @@ drawScene tex zoom tilt twinkle spin stars _ = do
     glRotatef (-ti) 1 0 0
     when tw $ do
       glColor4ub' (starColor s2) 255
-      glBegin gl_QUADS
+      glBegin GL_QUADS
       glTexCoord2f 0 0 >> glVertex3f (-1) (-1) 0
       glTexCoord2f 1 0 >> glVertex3f 1 (-1) 0
       glTexCoord2f 1 1 >> glVertex3f 1 1 0
@@ -130,7 +130,7 @@ drawScene tex zoom tilt twinkle spin stars _ = do
       glEnd
     glRotatef sp 0 0 1
     glColor4ub' (starColor s1) 255
-    glBegin gl_QUADS
+    glBegin GL_QUADS
     glTexCoord2f 0 0 >> glVertex3f (-1) (-1) 0
     glTexCoord2f 1 0 >> glVertex3f 1 (-1) 0
     glTexCoord2f 1 1 >> glVertex3f 1 1 0

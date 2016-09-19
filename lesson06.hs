@@ -6,8 +6,8 @@ module Main where
 
 import qualified Graphics.UI.GLFW as GLFW
 -- everything from here starts with gl or GL
-import Graphics.Rendering.OpenGL.Raw
-import Graphics.Rendering.GLU.Raw ( gluPerspective )
+import Graphics.GL
+import Graphics.GLU ( gluPerspective )
 import Data.Bits ( (.|.) )
 import System.Exit ( exitWith, ExitCode(..) )
 import Control.Monad ( forever )
@@ -19,13 +19,13 @@ import Paths_nehe_tuts
 
 initGL :: GLFW.Window -> IO GLuint
 initGL win = do
-  glEnable gl_TEXTURE_2D
-  glShadeModel gl_SMOOTH
+  glEnable GL_TEXTURE_2D
+  glShadeModel GL_SMOOTH
   glClearColor 0 0 0 0
   glClearDepth 1
-  glEnable gl_DEPTH_TEST
-  glDepthFunc gl_LEQUAL
-  glHint gl_PERSPECTIVE_CORRECTION_HINT gl_NICEST
+  glEnable GL_DEPTH_TEST
+  glDepthFunc GL_LEQUAL
+  glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST
   (w,h) <- GLFW.getFramebufferSize win
   resizeScene win w h
   loadGLTextures
@@ -43,23 +43,23 @@ loadGLTextures = do
   let (ptr, off, _) = BSI.toForeignPtr pd
   withForeignPtr ptr $ \p -> do
     let p' = p `plusPtr` off
-    glBindTexture gl_TEXTURE_2D tex
-    glTexImage2D gl_TEXTURE_2D 0 3
-      (fromIntegral w) (fromIntegral h) 0 gl_RGB gl_UNSIGNED_BYTE
+    glBindTexture GL_TEXTURE_2D tex
+    glTexImage2D GL_TEXTURE_2D 0 3
+      (fromIntegral w) (fromIntegral h) 0 GL_RGB GL_UNSIGNED_BYTE
       p'
-    let glLinear = fromIntegral gl_LINEAR
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MIN_FILTER glLinear
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MAG_FILTER glLinear
+    let glLinear = fromIntegral GL_LINEAR
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER glLinear
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER glLinear
   return tex
 
 resizeScene :: GLFW.WindowSizeCallback
 resizeScene win w     0      = resizeScene win w 1 -- prevent divide by zero
 resizeScene _   width height = do
   glViewport 0 0 (fromIntegral width) (fromIntegral height)
-  glMatrixMode gl_PROJECTION
+  glMatrixMode GL_PROJECTION
   glLoadIdentity
   gluPerspective 45 (fromIntegral width/fromIntegral height) 0.1 100
-  glMatrixMode gl_MODELVIEW
+  glMatrixMode GL_MODELVIEW
   glLoadIdentity
   glFlush
 
@@ -67,8 +67,8 @@ drawScene :: GLuint -> IORef GLfloat -> IORef GLfloat
           -> IORef GLfloat -> GLFW.Window -> IO ()
 drawScene tex xrot yrot zrot _ = do
   -- clear the screen and the depth buffer
-  glClear $ fromIntegral  $  gl_COLOR_BUFFER_BIT
-                         .|. gl_DEPTH_BUFFER_BIT
+  glClear $ fromIntegral  $  GL_COLOR_BUFFER_BIT
+                         .|. GL_DEPTH_BUFFER_BIT
   glLoadIdentity -- reset view
 
   glTranslatef 0 0 (-5.0) --Move left 5 Units into the screen
@@ -80,9 +80,9 @@ drawScene tex xrot yrot zrot _ = do
   glRotatef yr 0 1 0 -- Rotate the triangle on the Y axis
   glRotatef zr 0 0 1 -- Rotate the triangle on the Y axis
 
-  glBindTexture gl_TEXTURE_2D tex
+  glBindTexture GL_TEXTURE_2D tex
 
-  glBegin gl_QUADS -- start drawing a polygon (4 sided)
+  glBegin GL_QUADS -- start drawing a polygon (4 sided)
   -- first the front
   glTexCoord2f   0    0
   glVertex3f   (-1) (-1)    1  -- bottom left of quad (Front)

@@ -5,8 +5,8 @@
 module Main where
 import qualified Graphics.UI.GLFW as GLFW
 -- everything from here starts with gl or GL
-import Graphics.Rendering.OpenGL.Raw
-import Graphics.Rendering.GLU.Raw ( gluPerspective )
+import Graphics.GL
+import Graphics.GLU ( gluPerspective )
 import Data.Bits ( (.|.) )
 import System.Exit ( exitWith, ExitCode(..) )
 import Control.Monad ( forever, when, forM_, join )
@@ -22,18 +22,18 @@ type Points = IOArray (Int, Int, Int) GLfloat
 
 initGL :: GLFW.Window -> IO GLuint
 initGL win = do
-  glEnable gl_TEXTURE_2D
-  glShadeModel gl_SMOOTH
+  glEnable GL_TEXTURE_2D
+  glShadeModel GL_SMOOTH
   glClearColor 0 0 0 0.5
   glClearDepth 1
-  glEnable gl_DEPTH_TEST
-  glDepthFunc gl_LEQUAL
-  glHint gl_PERSPECTIVE_CORRECTION_HINT gl_NICEST
+  glEnable GL_DEPTH_TEST
+  glDepthFunc GL_LEQUAL
+  glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST
   -- On some video cards/drivers this looks terrible
   -- So if you get an ugly image, try commenting out
   -- these two glPolygonMode lines
-  glPolygonMode gl_BACK  gl_FILL
-  glPolygonMode gl_FRONT gl_LINE
+  glPolygonMode GL_BACK  GL_FILL
+  glPolygonMode GL_FRONT GL_LINE
   (w,h) <- GLFW.getFramebufferSize win
   resizeScene win w h
   loadGLTextures
@@ -50,14 +50,14 @@ loadGLTextures = do
   let (ptr, off, _) = BSI.toForeignPtr pd
   _ <- withForeignPtr ptr $ \p -> do
     let p' = p `plusPtr` off
-        glNearest  = fromIntegral gl_NEAREST
+        glNearest  = fromIntegral GL_NEAREST
     -- create linear filtered texture
-    glBindTexture gl_TEXTURE_2D tex
-    glTexImage2D gl_TEXTURE_2D 0 3
+    glBindTexture GL_TEXTURE_2D tex
+    glTexImage2D GL_TEXTURE_2D 0 3
       (fromIntegral w) (fromIntegral h)
-      0 gl_RGB gl_UNSIGNED_BYTE p'
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MAG_FILTER glNearest
-    glTexParameteri gl_TEXTURE_2D gl_TEXTURE_MIN_FILTER glNearest
+      0 GL_RGB GL_UNSIGNED_BYTE p'
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER glNearest
+    glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER glNearest
   return tex
 
 shutdown :: GLFW.WindowCloseCallback
@@ -71,18 +71,18 @@ resizeScene :: GLFW.WindowSizeCallback
 resizeScene win w     0      = resizeScene win w 1 -- prevent divide by zero
 resizeScene _   width height = do
   glViewport 0 0 (fromIntegral width) (fromIntegral height)
-  glMatrixMode gl_PROJECTION
+  glMatrixMode GL_PROJECTION
   glLoadIdentity
   gluPerspective 45 (fromIntegral width/fromIntegral height) 0.1 100
-  glMatrixMode gl_MODELVIEW
+  glMatrixMode GL_MODELVIEW
   glLoadIdentity
   glFlush
 
 drawScene :: GLuint -> IORef GLfloat -> IORef GLfloat -> IORef GLfloat
           -> Points -> IORef Int -> IORef Int -> GLFW.Window -> IO () 
 drawScene tex xrot yrot zrot points wiggleRef offsetRef _ = do
-  glClear $ fromIntegral  $  gl_COLOR_BUFFER_BIT
-                         .|. gl_DEPTH_BUFFER_BIT
+  glClear $ fromIntegral  $  GL_COLOR_BUFFER_BIT
+                         .|. GL_DEPTH_BUFFER_BIT
 
   glLoadIdentity
 
@@ -96,8 +96,8 @@ drawScene tex xrot yrot zrot points wiggleRef offsetRef _ = do
   glRotatef xr 1 0 0
   glRotatef yr 0 1 0
   glRotatef zr 0 0 1
-  glBindTexture gl_TEXTURE_2D tex
-  glBegin gl_QUADS
+  glBindTexture GL_TEXTURE_2D tex
+  glBegin GL_QUADS
   forM_ [(x,y) | x <- [0..43], y<-[0..43]] $ \(x,y) -> do
     let x'  = (x+offset) `mod` 45
         fx  = fromIntegral x/44 :: GLfloat
